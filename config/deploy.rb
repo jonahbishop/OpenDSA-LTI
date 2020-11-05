@@ -11,7 +11,6 @@ ask :branch, proc { `git rev-parse --abbrev-ref HEAD`.chomp }.call
 set :deploy_to, '/home/deploy/OpenDSA-LTI'
 
 # https://stackoverflow.com/a/40061188
-# set :opendsa_branch, ENV['opendsa_branch'] || 'master'
 set :khan_branch, ENV['khan_branch'] || 'master'
 
 # Default value for :scm is :git
