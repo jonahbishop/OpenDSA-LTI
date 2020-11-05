@@ -1,14 +1,14 @@
 class CreateOdsaUserTimeTracking < ActiveRecord::Migration[6.0]
   def change
     create_table :odsa_user_time_trackings do |t|
-      t.bigint    "user_id", null: false
-      t.bigint    "inst_book_id"
-      t.bigint    "inst_section_id"
-      t.bigint    "inst_book_section_exercise_id"
-      t.bigint    "inst_course_offering_exercise_id"
-      t.bigint    "inst_chapter_module_id"
-      t.bigint    "inst_module_version_id"
-      t.bigint    "inst_module_section_exercise_id"
+      t.integer    "user_id", null: false
+      t.integer    "inst_book_id"
+      t.integer    "inst_section_id"
+      t.integer    "inst_book_section_exercise_id"
+      t.integer    "inst_course_offering_exercise_id"
+      t.integer    "inst_chapter_module_id"
+      t.integer    "inst_module_version_id"
+      t.integer    "inst_module_section_exercise_id"
       t.string    "uuid", limit: 50, null: false
       t.string    "session_date", limit: 50, null: false
       t.decimal   "total_time", precision: 10, scale: 2, null: false

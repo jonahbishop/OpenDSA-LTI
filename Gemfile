@@ -135,6 +135,7 @@ gem 'wannabe_bool'
 gem 'capistrano3-delayed-job', '~> 1.0'
 gem 'capistrano-bower'
 gem 'capistrano'
+gem 'capistrano-figaro-yml', '~> 1.0.2'
 gem 'capistrano-bundler'
 gem 'capistrano-rails'
 gem 'capistrano-rbenv', github: "capistrano/rbenv"
