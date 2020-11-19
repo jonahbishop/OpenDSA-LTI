@@ -10,9 +10,6 @@ ask :branch, proc { `git rev-parse --abbrev-ref HEAD`.chomp }.call
 # Default deploy_to directory is /var/www/my_app
 set :deploy_to, '/home/deploy/OpenDSA-LTI'
 
-# https://stackoverflow.com/a/40061188
-set :khan_branch, ENV['khan_branch'] || 'master'
-
 # Default value for :scm is :git
 # set :scm, :git
 
@@ -170,7 +167,7 @@ namespace :deploy do
   # manually checkout master for khan-exercises repository
   after :finishing, 'deploy:checkout_ka' do
     on roles :all do
-      execute "cd ~/OpenDSA/khan-exercises; git checkout #{fetch(:khan_branch)}; git pull;"
+      execute "cd ~/OpenDSA/khan-exercises; git checkout $(echo $opendsa_branch); git pull;"
     end
   end
 
