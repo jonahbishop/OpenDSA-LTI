@@ -131,8 +131,7 @@ $(function () {
       this.element.show();
     }
   });
-
-  $(document).ready(function () {
+  $(function () {
     $("#tools-accordion").accordionjs({ closeAble: true });
     $("#combobox").combobox();
     $("#toggle").on("click", function () {
@@ -196,13 +195,7 @@ $(function () {
       downloadAnchorNode.click();
       downloadAnchorNode.remove();
     });
-    /*$('#display').click(function() {
-      console.log("clicked registered");
-      return handle_display();
-    });*/
-
   });
-
   function getTimestamp(date) {
     var month = date.getMonth() + 1;
     if (month < 10) month = '0' + month;
@@ -218,7 +211,6 @@ $(function () {
     var timestamp = '' + date.getFullYear() + month + day + hour + minute + second;
     return timestamp;
   }
-
   function table2csv(headers, body, replacements) {
     if (!replacements) replacements = [];
     var csv = '';
@@ -243,8 +235,7 @@ $(function () {
     }
     return csv;
   }
-
-  handle_module_display = function () {
+  function handle_module_display() {
     var messages = check_dis_completeness("modules_table");
     if (messages.length !== 0) {
       alert(messages);
@@ -353,8 +344,7 @@ $(function () {
       $('#spinner').css('display', 'none');
     });
   };
-
-  handle_display = function () {
+  function handle_display() {
     var messages = check_dis_completeness("table");
     if (messages.length !== 0) {
       alert(messages);
@@ -437,8 +427,7 @@ $(function () {
       $('#spinner').css('display', 'none');
     });
   };
-
-  getFieldMember = function (sData, pData, attempts, instBookSecEx, kahn_ex) {
+  function getFieldMember(sData, pData, attempts, instBookSecEx, kahn_ex) {
     // console.dir(pData)
     var member = '<tr>';
     var pointsEarned = pData.proficient_date ? instBookSecEx.points : 0;
@@ -461,8 +450,7 @@ $(function () {
     //member += '<td>' + sData.time_posted + '</td>';
     return member;
   };
-
-  buildProgressHeader = function (kahn_ex) {
+  function buildProgressHeader(kahn_ex) {
     var elem = '<tr>';
     if (kahn_ex == null || kahn_ex == false) {
       elem += '<th>Current Score</th>';
@@ -480,7 +468,7 @@ $(function () {
 
     return elem;
   };
-  getAttemptHeader = function (kahn_ex) {
+  function getAttemptHeader(kahn_ex) {
     var head = '<tr>';
     if (kahn_ex == null || kahn_ex == false) {
       head += '<th>Question name</th>';
@@ -495,7 +483,7 @@ $(function () {
     head += '<th>Time Taken (s)</th>';
     return head;
   };
-  getAttemptMemeber = function (aData, j, kahn_ex) {
+  function getAttemptMemeber(aData, j, kahn_ex) {
     var memb = "<tr>";
     //console.dir(aData.earned_proficiency + " and j = " + j)
     if (kahn_ex == null || kahn_ex == false) {
@@ -520,7 +508,7 @@ $(function () {
 
 
   };
-  handle_select_student = function () {
+  function handle_select_student() {
     var messages = check_dis_completeness("individual_student");
     if (messages.length !== 0) {
       alert(messages);
@@ -580,8 +568,7 @@ $(function () {
       $('#spinner').css('display', 'none');
     });
   }
-
-  check_dis_completeness = function (flag) {
+  function check_dis_completeness(flag) {
     var messages;
     messages = [];
     var selectbar1 = $('#combobox').find('option:selected').text();
