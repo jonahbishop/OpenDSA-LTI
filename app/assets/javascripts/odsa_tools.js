@@ -3,6 +3,18 @@ $(function () {
   //
   // Time Tracking
   //
+
+  var odsaStore = localforage.createInstance({
+    name: 'OpenDSA_analytics',
+    storeName: 'OpenDSA_analytics'
+  })
+
+  Plotly.d3.json("/course_offerings/users_chapters/" + ODSA_DATA.course_offering_id,
+    function (err, data) {
+      odsaStore.setItem("users", data["users"])
+      odsaStore.setItem("chapters", data["chapters"])
+    })
+
   Plotly.d3.json("https://raw.githubusercontent.com/hosamshahin/OpenDSA-TimeTrackingViz/master/fake_data.json",
     function (err, userData) {
 

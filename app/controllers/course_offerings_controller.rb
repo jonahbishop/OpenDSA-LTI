@@ -144,6 +144,7 @@ class CourseOfferingsController < ApplicationController
     )
   end
 
+  # GET /course_offerings/:id/modules/:inst_chapter_module_id/progresses
   def find_module_progresses
     if current_user.blank?
       render :json => {
@@ -175,6 +176,34 @@ class CourseOfferingsController < ApplicationController
       exercises: exercises.as_json(include: :inst_exercise),
       enrollments: enrollments.as_json(include: {user: {include: {odsa_module_progresses: {only: [:current_score, :first_done, :last_done, :highest_score, :id, :proficient_date, :created_at]}, odsa_exercise_progresses: {only: [:id, :inst_book_section_exercise_id, :current_score, :highest_score, :proficient_date]}}, only: [:id, :first_name, :last_name, :email, :odsa_module_progresses]}}),
       students: users.as_json(only: [:id, :first_name, :last_name, :email]),
+    }
+  end
+
+  # GET /course_offerings/users_chapters/:id
+  def get_users_chapters
+    if current_user.blank?
+      render :json => {
+        message: 'You are not logged in. Please make sure your browser is set to allow third-party cookies',
+      }, :status => :forbidden
+      return
+    end
+
+    course_offering = CourseOffering.find(params[:id])
+    unless course_offering.is_instructor?(current_user) || current_user.global_role.is_admin?
+      render :json => {
+        message: 'You are not an instructor for this course offering. Your user id: ' + current_user.id.to_s,
+      }, :status => :forbidden
+      return
+    end
+
+    users = CourseEnrollment.where(course_offering_id: course_offering.id, course_role_id: CourseRole::STUDENT_ID).where('users.email != ?', OpenDSA::STUDENT_VIEW_EMAIL).joins(:user).includes(:user).order('users.id ASC').collect { |e| e.user }
+
+    instBook = course_offering.odsa_books.first
+    chapters = InstChapter.where(inst_book_id: instBook.id).order('position')
+
+    render :json => {
+      users: users.as_json(only: [:id, :first_name, :last_name, :email]),
+      chapters: chapters.as_json(only: [:id, :name])
     }
   end
 
@@ -449,5 +478,5 @@ class CourseOfferingsController < ApplicationController
     params.require(:course_offering).permit(:course_id, :term_id,
                                             :label, :url, :self_enrollment_allowed)
   end
-  
+
 end
