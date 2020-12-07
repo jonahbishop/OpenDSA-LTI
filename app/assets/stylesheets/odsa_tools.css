@@ -368,6 +368,9 @@ label {
 	font-weight: bold;
 	margin-bottom: 10px;
 }
+.label {
+	color: black;
+}
 p, .control-group {
 	margin: 0 0 20px 0;
 }
