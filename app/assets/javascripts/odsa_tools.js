@@ -606,8 +606,8 @@ $(function () {
         }
         break;
       default:
-        console.log("unknown error from lti_table.js module");
-        alert("unknown error from lti_table.js module, written by: Souleymane Dia");
+        console.log("unknown error from odsa_tools.js module");
+        alert("unknown error from odsa_tools.js module, written by: Souleymane Dia");
     }
 
     return messages;
