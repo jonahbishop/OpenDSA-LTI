@@ -7,6 +7,7 @@
     %link{:href => "//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css", :rel => "stylesheet"}/
     = stylesheet_link_tag 'bs', media: 'all'
     = stylesheet_link_tag "table_lti"
+    = stylesheet_link_tag "accordion"
     %script{:src => "https://code.jquery.com/jquery-1.12.4.js"}
     %script{:src => "https://code.jquery.com/ui/1.12.1/jquery-ui.js"}
     :javascript
@@ -18,86 +19,113 @@
       }());
   -#{ :style => "display: inline-block; " }
   %body
-    .container
-      .form-group.col-xs-12.row
-        %label.control-label.col-lg-2.col-sm-3{for: "select-tool"} 
-          Select Tool:
-        .col-xs-6
-          %select#select-tool.form-control
-            %option{:value => 'overview' }
-              Multi-Student Overview
-            %option{:value => 'detail' }
-              Single Student Detail View
 
-        %input#btn-select-tool.btn.btn-primary{type: 'button', value: 'Select'}
-        
-      #detail-container.form-group.col-xs-12.row{style: 'display: none;'}
-        %label.control-label.col-lg-2.col-sm-3{for: "combobox"} 
-          Select Student:
-        .col-xs-6
-          %select#combobox.form-control{:size => "10"}
-            - @student_list.each do |q|
-              %option{:value => q.id }
-                #{q.first_name} #{q.last_name}
+    %ul#tools-accordion.accordionjs
+      / Section 1
+      %li
+        %div Time Tracking (Box Plot)
+        %div
+          / Section content here.
+          #wrapper
+            .control-group
+              %select#select-for-box.contacts{:placeholder => "Pick some people..."}
+          #plotlyBoxDiv
+          / TODO: change html structure
+          #datatabels_wrapper
+            %table#students_info.display{:width => "100%"}
+      / Section 2
+      %li
+        %div Time Tracking (Time Series)
+        %div
+          / Section content here.
+          #line_wrapper
+            .control-group
+              %select#select-for-line.contacts{:placeholder => "Pick some people..."}
+          #plotlyLineDiv
+      / Section 3
+      %li
+        %div Exercises Lookup
+        .container
+          .form-group.col-xs-12.row
+            %label.control-label.col-lg-2.col-sm-3{for: "select-tool"}
+              Select Tool:
+            .col-xs-6
+              %select#select-tool.form-control
+                %option{:value => 'overview' }
+                  Multi-Student Overview
+                %option{:value => 'detail' }
+                  Single Student Detail View
 
-        %input#select.btn.btn-primary{name: @course_id, type: 'button', value: 'Select'}
-      
-      #overview-container.form-group.col-xs-12.row{style: 'display: none;'}
-        %label.control-label.col-lg-2.col-sm-3{for: "select-module"}
-          Select Module
-          %a.tooltip-bottom{href: '#', "data-tooltip": 'Only includes gradable modules.'} (?)
-          \:
-        .col-xs-6
-          %select#select-module.form-control{:size => "10", style: "vertical-align: top; display: inline-block;"}
-            - @chapter_list.each do |c|
-              - c.inst_chapter_modules.each do |cm|
-                %option{:value => cm.id }
-                  #{(c.position.to_s.rjust(2, "0") || "") + "." + (cm.module_position.to_s.rjust(2, "0") || "") + " - " + cm.inst_module.name}
+            %input#btn-select-tool.btn.btn-primary{type: 'button', value: 'Select'}
 
-        %input#btn-select-module.btn.btn-primary{type: 'button', value: 'Select'}
+          #detail-container.form-group.col-xs-12.row{style: 'display: none;'}
+            %label.control-label.col-lg-2.col-sm-3{for: "combobox"}
+              Select Student:
+            .col-xs-6
+              %select#combobox.form-control{:size => "10"}
+                - @student_list.each do |q|
+                  %option{:value => q.id }
+                    #{q.first_name} #{q.last_name}
 
-      #spinner.spinner{style: 'display: none;'}
-        .bounce1
-        .bounce2
-        .bounce3
-      
-      #log.form-group.col-xs-12.row
+            %input#select.btn.btn-primary{name: @course_id, type: 'button', value: 'Select'}
 
-      #display_table.form-group.col-xs-12.row
+          #overview-container.form-group.col-xs-12.row{style: 'display: none;'}
+            %label.control-label.col-lg-2.col-sm-3{for: "select-module"}
+              Select Module
+              %a.tooltip-bottom{href: '#', "data-tooltip": 'Only includes gradable modules.'} (?)
+              \:
+            .col-xs-6
+              %select#select-module.form-control{:size => "10", style: "vertical-align: top; display: inline-block;"}
+                - @chapter_list.each do |c|
+                  - c.inst_chapter_modules.each do |cm|
+                    %option{:value => cm.id }
+                      #{(c.position.to_s.rjust(2, "0") || "") + "." + (cm.module_position.to_s.rjust(2, "0") || "") + " - " + cm.inst_module.name}
 
-      #mst-container.form-group.col-xs-12.row{style: 'display: none; overflow: auto;'}
-        %input#btn-module-csv.btn.btn-primary{type: 'button', value: 'Download CSV'}
-        %table#module-scores-table.table.table-hover.table-bordered
-          %thead#mst-head
-            %tr
-              %th{colspan: 3}
-                Student Info
-              %th{style: "text-align: center;", colspan: 5}
-                Module Info
-              %th#exercise-info-header{style: "text-align: center;", colspan: 1}
-                Exercise Info
-            %tr#mst-header-row
-              %th
-                First Name
-              %th
-                Last Name
-              %th
-                Email
-              %th
-                Points Earned
-                %a{href: '#', "data-tooltip": 'The number of points the student has earned so far for this module.'} (?) 
-              %th
-                Points Possible
-                %a{href: '#', "data-tooltip": 'The maximum number of points that can be earned for this module.'} (?) 
-              %th
-                First Accessed
-                %a{href: '#', "data-tooltip": 'When the student first viewed this module.'} (?) 
-              %th
-                Proficient Date
-                %a{href: '#', "data-tooltip": 'When the student first completed all exercises and slideshows in the module.'} (?) 
-              %th
-                Last Exercise Completed
-                %a{href: '#', "data-tooltip": 'The last time an exercise was completed and a score sent to Canvas.'} (?) 
-          %tbody#mst-body
+            %input#btn-select-module.btn.btn-primary{type: 'button', value: 'Select'}
+
+          #spinner.spinner{style: 'display: none;'}
+            .bounce1
+            .bounce2
+            .bounce3
+
+          #log.form-group.col-xs-12.row
+
+          #display_table.form-group.col-xs-12.row
+
+          #mst-container.form-group.col-xs-12.row{style: 'display: none; overflow: auto;'}
+            %input#btn-module-csv.btn.btn-primary{type: 'button', value: 'Download CSV'}
+            %table#module-scores-table.table.table-hover.table-bordered
+              %thead#mst-head
+                %tr
+                  %th{colspan: 3}
+                    Student Info
+                  %th{style: "text-align: center;", colspan: 5}
+                    Module Info
+                  %th#exercise-info-header{style: "text-align: center;", colspan: 1}
+                    Exercise Info
+                %tr#mst-header-row
+                  %th
+                    First Name
+                  %th
+                    Last Name
+                  %th
+                    Email
+                  %th
+                    Points Earned
+                    %a{href: '#', "data-tooltip": 'The number of points the student has earned so far for this module.'} (?)
+                  %th
+                    Points Possible
+                    %a{href: '#', "data-tooltip": 'The maximum number of points that can be earned for this module.'} (?)
+                  %th
+                    First Accessed
+                    %a{href: '#', "data-tooltip": 'When the student first viewed this module.'} (?)
+                  %th
+                    Proficient Date
+                    %a{href: '#', "data-tooltip": 'When the student first completed all exercises and slideshows in the module.'} (?)
+                  %th
+                    Last Exercise Completed
+                    %a{href: '#', "data-tooltip": 'The last time an exercise was completed and a score sent to Canvas.'} (?)
+              %tbody#mst-body
 
 = javascript_include_tag('lti_table.js')
+= javascript_include_tag('accordion.min.js')

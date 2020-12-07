@@ -1,6 +1,6 @@
-$(function() {
+$(function () {
   $.widget("custom.combobox", {
-    _create: function() {
+    _create: function () {
       this.wrapper = $("<span>")
         .addClass("custom-combobox")
         .addClass("custom-comb")
@@ -11,7 +11,7 @@ $(function() {
       this._createShowAllButton();
     },
 
-    _createAutocomplete: function() {
+    _createAutocomplete: function () {
       var selected = this.element.children(":selected"),
         value = selected.val() ? selected.text() : "";
 
@@ -33,7 +33,7 @@ $(function() {
         });
 
       this._on(this.input, {
-        autocompleteselect: function(event, ui) {
+        autocompleteselect: function (event, ui) {
           ui.item.option.selected = true;
           this._trigger("select", event, {
             item: ui.item.option
@@ -44,7 +44,7 @@ $(function() {
       });
     },
 
-    _createShowAllButton: function() {
+    _createShowAllButton: function () {
       var input = this.input,
         wasOpen = false;
 
@@ -62,10 +62,10 @@ $(function() {
         .removeClass("ui-corner-all")
         .addClass("custom-combobox-toggle ui-corner-right")
         .addClass("custom-comb-toggle ui-corner-right")
-        .on("mousedown", function() {
+        .on("mousedown", function () {
           wasOpen = input.autocomplete("widget").is(":visible");
         })
-        .on("click", function() {
+        .on("click", function () {
           input.trigger("focus");
 
           // Close if already visible
@@ -78,9 +78,9 @@ $(function() {
         });
     },
 
-    _source: function(request, response) {
+    _source: function (request, response) {
       var matcher = new RegExp($.ui.autocomplete.escapeRegex(request.term), "i");
-      response(this.element.children("option").map(function() {
+      response(this.element.children("option").map(function () {
         var text = $(this).text();
         if (this.value && (!request.term || matcher.test(text)))
           return {
@@ -91,7 +91,7 @@ $(function() {
       }));
     },
 
-    _removeIfInvalid: function(event, ui) {
+    _removeIfInvalid: function (event, ui) {
 
       // Selected an item, nothing to do
       if (ui.item) {
@@ -102,7 +102,7 @@ $(function() {
       var value = this.input.val(),
         valueLowerCase = value.toLowerCase(),
         valid = false;
-      this.element.children("option").each(function() {
+      this.element.children("option").each(function () {
         if ($(this).text().toLowerCase() === valueLowerCase) {
           this.selected = valid = true;
           return false;
@@ -120,38 +120,31 @@ $(function() {
         .attr("title", value + " didn't match any item")
         .tooltip("open");
       this.element.val("");
-      this._delay(function() {
+      this._delay(function () {
         this.input.tooltip("close").attr("title", "");
       }, 2500);
       this.input.autocomplete("instance").term = "";
     },
 
-    _destroy: function() {
+    _destroy: function () {
       this.wrapper.remove();
       this.element.show();
     }
   });
 
-
-
-});
-
-(function() {
-
-  //console.dir("lti tablejs")
-
-  $(document).ready(function() {
+  $(document).ready(function () {
+    $("#tools-accordion").accordionjs({ closeAble: true });
     $("#combobox").combobox();
-    $("#toggle").on("click", function() {
+    $("#toggle").on("click", function () {
       $("#combobox").toggle();
     });
 
     $("#comb").combobox();
-    $("#toggle").on("click", function() {
+    $("#toggle").on("click", function () {
       $("#comb").toggle();
     });
 
-    $('#select').click(function() {
+    $('#select').click(function () {
       $('#log').html("");
       $('#display_table').html("");
       console.log("clicked registered");
@@ -159,8 +152,8 @@ $(function() {
       //handle_select_student();
       //handle_display()
     });
-    
-    $('#btn-select-tool').on('click', function() {
+
+    $('#btn-select-tool').on('click', function () {
 
       $('#overview-container').css('display', 'none');
       $('#detail-container').css('display', 'none');
@@ -168,7 +161,7 @@ $(function() {
       $('#log').html('');
       $('#display_table').html('');
 
-      switch($('#select-tool').val()) {
+      switch ($('#select-tool').val()) {
         case "detail":
           $('#detail-container').css('display', '');
           break;
@@ -176,13 +169,13 @@ $(function() {
           $('#overview-container').css('display', '');
           break;
         default:
-          //
+        //
       }
     });
 
     $('#btn-select-module').on('click', handle_module_display);
 
-    $('#btn-module-csv').on('click', function() {
+    $('#btn-module-csv').on('click', function () {
       var headers = $('#mst-header-row')[0];
       var tbody = $('#mst-body')[0];
       var csv = table2csv(headers, tbody, [[/ \(\?\)/g, '']]);
@@ -190,9 +183,9 @@ $(function() {
       var dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(csv);
       var modules = $('#select-module')[0];
       var selectedModule = modules.options[modules.selectedIndex].innerText
-                                    .replace('-', '_')
-                                    .replace(/\./g, '-')
-                                    .replace(/\s/g, '');
+        .replace('-', '_')
+        .replace(/\./g, '-')
+        .replace(/\s/g, '');
 
       var exportName = selectedModule + '_' + getTimestamp(new Date());
       var downloadAnchorNode = document.createElement('a');
@@ -251,7 +244,7 @@ $(function() {
     return csv;
   }
 
-  handle_module_display = function() {
+  handle_module_display = function () {
     var messages = check_dis_completeness("modules_table");
     if (messages.length !== 0) {
       alert(messages);
@@ -263,7 +256,7 @@ $(function() {
     $.ajax({
       url: "/course_offerings/" + ODSA_DATA.course_offering_id + "/modules/" + $('#select-module').val() + "/progresses",
       type: 'get'
-    }).done(function(data) {
+    }).done(function (data) {
 
       var exHeader = $('#exercise-info-header');
       var headers = $('#mst-header-row');
@@ -271,7 +264,7 @@ $(function() {
       var exInfoColStartIdx = 8;
       headers.children().slice(exInfoColStartIdx).remove();
       tbody.empty();
-      
+
       // create a column for each exercise
       var points_possible = 0;
       for (var i = 0; i < data.exercises.length; i++) {
@@ -348,7 +341,7 @@ $(function() {
       }
       tbody.append(html);
       $('#mst-container').css('display', '');
-    }).fail(function(error) {
+    }).fail(function (error) {
       console.log(error);
       try {
         alert('ERROR: ' + JSON.parse(error.responseText).message)
@@ -356,12 +349,12 @@ $(function() {
       catch (ex) {
         alert("Failed to retrieve module progress data.\n" + error.responseText);
       }
-    }).always(function() {
+    }).always(function () {
       $('#spinner').css('display', 'none');
     });
   };
 
-  handle_display = function() {
+  handle_display = function () {
     var messages = check_dis_completeness("table");
     if (messages.length !== 0) {
       alert(messages);
@@ -375,7 +368,7 @@ $(function() {
       url: request,
       type: 'get',
       data: $(this).serialize()
-    }).done(function(data) {
+    }).done(function (data) {
       if (data.odsa_exercise_progress.length == 0 || data.odsa_exercise_attempts.length == 0) {
         var p = '<p style="font-size:24px; align=center;"> You have not Attempted this exercise <p>';
         $('#display_table').html(p);
@@ -437,15 +430,15 @@ $(function() {
       }
 
       //change_courses(data);
-    }).fail(function(data) {
+    }).fail(function (data) {
       alert("failure");
       console.log('AJAX request has FAILED');
-    }).always(function() {
+    }).always(function () {
       $('#spinner').css('display', 'none');
     });
   };
 
-  getFieldMember = function(sData, pData, attempts, instBookSecEx, kahn_ex) {
+  getFieldMember = function (sData, pData, attempts, instBookSecEx, kahn_ex) {
     // console.dir(pData)
     var member = '<tr>';
     var pointsEarned = pData.proficient_date ? instBookSecEx.points : 0;
@@ -469,7 +462,7 @@ $(function() {
     return member;
   };
 
-  buildProgressHeader = function(kahn_ex) {
+  buildProgressHeader = function (kahn_ex) {
     var elem = '<tr>';
     if (kahn_ex == null || kahn_ex == false) {
       elem += '<th>Current Score</th>';
@@ -487,7 +480,7 @@ $(function() {
 
     return elem;
   };
-  getAttemptHeader = function(kahn_ex) {
+  getAttemptHeader = function (kahn_ex) {
     var head = '<tr>';
     if (kahn_ex == null || kahn_ex == false) {
       head += '<th>Question name</th>';
@@ -502,7 +495,7 @@ $(function() {
     head += '<th>Time Taken (s)</th>';
     return head;
   };
-  getAttemptMemeber = function(aData, j, kahn_ex) {
+  getAttemptMemeber = function (aData, j, kahn_ex) {
     var memb = "<tr>";
     //console.dir(aData.earned_proficiency + " and j = " + j)
     if (kahn_ex == null || kahn_ex == false) {
@@ -527,74 +520,74 @@ $(function() {
 
 
   };
-  handle_select_student = function(){
-        var messages = check_dis_completeness("individual_student");
-        if (messages.length !== 0) {
-            alert(messages);
-            return;
-        }
-        //GET /course_offerings/:user_id/course_offering_id/exercise_list
-        var al = $('#combobox').find('option:selected').val();
-        var request = "/course_offerings/" + $('#combobox').find('option:selected').val() + "/" + document.getElementById('select').name + "/exercise_list";
-        $('#spinner').css('display', '');
-        var aj = $.ajax({
-            url: request,
-            type: 'get',
-            data: $(this).serialize()
-        }).done(function(data) {
-            if (data.odsa_exercise_attempts.length === 0) {
-                var p = '<p style="font-size:24px; align=center;"> Select a student name <p>';
-                $('#log').html(p);
-            } else {
-                //$('#log').html(p);
-
-                //$('#log').html("<%= j render(partial: 'show_individual_exercise') %>")
-                  //<%= escape_javascript(render(:partial => 'lti/show_individual_exercise.html.haml')) %>");
-                //.append("<%= j render(:partial => 'views/lti/show_individual_exercise') %>");
-                //var elem = '<div class="ui-widget">';
-                var elem = '<label class="control-label col-lg-2 col-sm-3">Select Exercise:</label>';
-                elem += '<div class="col-xs-6"><select id="comb" class="form-control">';
-                //elem += '<% @exercise_list.each do |k, q| %>';
-                //elem += '<% if q[1] %>';
-                var keys = Object.keys(data.odsa_exercise_attempts);
-                var attempt_flag = false;
-                for (var i = 0; i < keys.length; i++){
-                  var exercise = data.odsa_exercise_attempts[keys[i]];
-                  if (exercise.length > 1){
-                    attempt_flag = true
-                    elem += ' <option value="' + keys[i] + '">';
-                    elem += '<strong>' + exercise[0] + '</strong>';
-                    elem += '</option>';
-                  }
-                }
-                if (!attempt_flag){
-                  elem += ' <option value="No_attempt">';
-                    elem += '<strong> No Attempts Made</strong>';
-                    elem += '</option>';
-                }
-                elem += '</select></div>';
-                if (attempt_flag){
-                  elem += '<input class="btn btn-primary" id="display" onclick="handle_display()" name="display" type="button" value="Display Detail"></input>';
-                }                  
-                $('#log').html(elem);
-            
-        }
-        //change_courses(data);
-        }).fail(function(data) {
-            alert("failure");
-            console.log('AJAX request has FAILED');
-        }).always(function() {
-          $('#spinner').css('display', 'none');
-        });
+  handle_select_student = function () {
+    var messages = check_dis_completeness("individual_student");
+    if (messages.length !== 0) {
+      alert(messages);
+      return;
     }
+    //GET /course_offerings/:user_id/course_offering_id/exercise_list
+    var al = $('#combobox').find('option:selected').val();
+    var request = "/course_offerings/" + $('#combobox').find('option:selected').val() + "/" + document.getElementById('select').name + "/exercise_list";
+    $('#spinner').css('display', '');
+    var aj = $.ajax({
+      url: request,
+      type: 'get',
+      data: $(this).serialize()
+    }).done(function (data) {
+      if (data.odsa_exercise_attempts.length === 0) {
+        var p = '<p style="font-size:24px; align=center;"> Select a student name <p>';
+        $('#log').html(p);
+      } else {
+        //$('#log').html(p);
 
-  check_dis_completeness = function(flag) {
+        //$('#log').html("<%= j render(partial: 'show_individual_exercise') %>")
+        //<%= escape_javascript(render(:partial => 'lti/show_individual_exercise.html.haml')) %>");
+        //.append("<%= j render(:partial => 'views/lti/show_individual_exercise') %>");
+        //var elem = '<div class="ui-widget">';
+        var elem = '<label class="control-label col-lg-2 col-sm-3">Select Exercise:</label>';
+        elem += '<div class="col-xs-6"><select id="comb" class="form-control">';
+        //elem += '<% @exercise_list.each do |k, q| %>';
+        //elem += '<% if q[1] %>';
+        var keys = Object.keys(data.odsa_exercise_attempts);
+        var attempt_flag = false;
+        for (var i = 0; i < keys.length; i++) {
+          var exercise = data.odsa_exercise_attempts[keys[i]];
+          if (exercise.length > 1) {
+            attempt_flag = true
+            elem += ' <option value="' + keys[i] + '">';
+            elem += '<strong>' + exercise[0] + '</strong>';
+            elem += '</option>';
+          }
+        }
+        if (!attempt_flag) {
+          elem += ' <option value="No_attempt">';
+          elem += '<strong> No Attempts Made</strong>';
+          elem += '</option>';
+        }
+        elem += '</select></div>';
+        if (attempt_flag) {
+          elem += '<input class="btn btn-primary" id="display" onclick="handle_display()" name="display" type="button" value="Display Detail"></input>';
+        }
+        $('#log').html(elem);
+
+      }
+      //change_courses(data);
+    }).fail(function (data) {
+      alert("failure");
+      console.log('AJAX request has FAILED');
+    }).always(function () {
+      $('#spinner').css('display', 'none');
+    });
+  }
+
+  check_dis_completeness = function (flag) {
     var messages;
     messages = [];
     var selectbar1 = $('#combobox').find('option:selected').text();
-    switch(flag) {
+    switch (flag) {
       case 'individual_student':
-        if (selectbar1 === '' ){
+        if (selectbar1 === '') {
           messages.push("You need to select a student");
           return messages;
         }
@@ -613,11 +606,10 @@ $(function() {
         }
         break;
       default:
-        console.log ("unknown error from lti_table.js module");
-        alert ("unknown error from lti_table.js module, written by: Souleymane Dia");
+        console.log("unknown error from lti_table.js module");
+        alert("unknown error from lti_table.js module, written by: Souleymane Dia");
     }
 
     return messages;
   };
-
-}).call(this);
+});
