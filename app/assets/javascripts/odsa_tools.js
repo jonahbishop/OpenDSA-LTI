@@ -9,11 +9,62 @@ $(function () {
     storeName: 'OpenDSA_analytics'
   })
 
-  Plotly.d3.json("/course_offerings/users_chapters/" + ODSA_DATA.course_offering_id,
+  function getWeeksDates(start, end) {
+    var sDate;
+    var eDate;
+    var dateArr = [];
+
+    while (start <= end) {
+      if (start.getDay() == 1 || (dateArr.length == 0 && !sDate)) {
+        sDate = new Date(start.getTime());
+      }
+      if ((sDate && start.getDay() == 0) || start.getTime() == end.getTime()) {
+        eDate = new Date(start.getTime());
+      }
+      if (sDate && eDate) {
+        dateArr.push([sDate, eDate]);
+        sDate = undefined;
+        eDate = undefined;
+      }
+      start.setDate(start.getDate() + 1);
+    }
+    var lastDate = new Date(dateArr[dateArr.length - 1][1])
+    if (lastDate < end) {
+      dateArr.push([new Date(lastDate.setDate(lastDate.getDate() + 1)), end]);
+    }
+    return dateArr
+  }
+
+  Plotly.d3.json("/course_offerings/time_tracking/" + ODSA_DATA.course_offering_id,
     function (err, data) {
+      console.log(data)
       odsaStore.setItem("users", data["users"])
       odsaStore.setItem("chapters", data["chapters"])
+      odsaStore.setItem("term", data["term"][0])
+      var starts_on = data["term"][0]["starts_on"]
+      // var ends_on = data["term"][0]["ends_on"]
+      var weeksDates = getWeeksDates(new Date(starts_on + "T23:59:59-0000"), new Date())
+      var weeksDatesShort = weeksDates.map(function (x) {
+        var startDate = getTimestamp(x[0])
+        var endDate = getTimestamp(x[1])
+        return [startDate, endDate]
+      })
+      odsaStore.setItem("weeksDates", weeksDatesShort)
+
+      var weeksNamesShort = weeksDates.map(function (x) {
+        var startDate = getTimestamp(x[0]).split('-')
+        var endDate = getTimestamp(x[1]).split('-')
+        var startDateMonth = x[0].toLocaleString('default', { month: 'short' })
+        var endDateMonth = x[1].toLocaleString('default', { month: 'short' })
+        return startDateMonth + startDate[2] + '-' + endDateMonth + endDate[2]
+      })
+      odsaStore.setItem("weeksNamesShort", weeksNamesShort)
+
+      var weeksEndDates = weeksDatesShort.map(function (x) { return x[1] })
+      odsaStore.setItem("weeksEndDates", weeksEndDates)
     })
+
+
 
   Plotly.d3.json("https://raw.githubusercontent.com/hosamshahin/OpenDSA-TimeTrackingViz/master/fake_data.json",
     function (err, userData) {
@@ -1068,7 +1119,8 @@ $(function () {
     var second = date.getSeconds();
     if (second < 10) second = '0' + second;
 
-    var timestamp = '' + date.getFullYear() + month + day + hour + minute + second;
+    // var timestamp = '' + date.getFullYear() + month + day + hour + minute + second;
+    var timestamp = date.getFullYear() + '-' + month + '-' + day;
     return timestamp;
   }
   function table2csv(headers, body, replacements) {

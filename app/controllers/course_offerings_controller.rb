@@ -179,8 +179,8 @@ class CourseOfferingsController < ApplicationController
     }
   end
 
-  # GET /course_offerings/users_chapters/:id
-  def get_users_chapters
+  # GET /course_offerings/time_tracking/:id
+  def get_time_tracking_data
     if current_user.blank?
       render :json => {
         message: 'You are not logged in. Please make sure your browser is set to allow third-party cookies',
@@ -200,10 +200,12 @@ class CourseOfferingsController < ApplicationController
 
     instBook = course_offering.odsa_books.first
     chapters = InstChapter.where(inst_book_id: instBook.id).order('position')
+    term = Term.where(id: course_offering.term_id)
 
     render :json => {
       users: users.as_json(only: [:id, :first_name, :last_name, :email]),
-      chapters: chapters.as_json(only: [:id, :name])
+      chapters: chapters.as_json(only: [:id, :name]),
+      term: term.as_json(only: [:starts_on, :ends_on, :year, :slug])
     }
   end
 
