@@ -196,15 +196,16 @@ class CourseOfferingsController < ApplicationController
       return
     end
 
-    users = CourseEnrollment.where(course_offering_id: course_offering.id, course_role_id: CourseRole::STUDENT_ID).where('users.email != ?', OpenDSA::STUDENT_VIEW_EMAIL).joins(:user).includes(:user).order('users.id ASC').collect { |e| e.user }
+    users = CourseEnrollment.where(course_offering_id: course_offering.id).joins(:user).includes(:user).order('users.id ASC').collect { |e| e.user }
 
     instBook = course_offering.odsa_books.first
-    chapters = InstChapter.where(inst_book_id: instBook.id).order('position')
+    chapters = InstChapter.where(inst_book_id: instBook.id).joins(:inst_chapter_modules).where("inst_chapters.id = inst_chapter_modules.inst_chapter_id").select('inst_chapters.id as ch_id,inst_chapters.name as ch_name,inst_chapter_modules.inst_module_id as mod_id').order('inst_chapters.position')
+
     term = Term.where(id: course_offering.term_id)
 
     render :json => {
       users: users.as_json(only: [:id, :first_name, :last_name, :email]),
-      chapters: chapters.as_json(only: [:id, :name]),
+      chapters: chapters.as_json(),
       term: term.as_json(only: [:starts_on, :ends_on, :year, :slug])
     }
   end

@@ -12,8 +12,10 @@ $(function () {
     var sDate;
     var eDate;
     var dateArr = [];
+    var daysHash = {};
 
     while (start <= end) {
+      daysHash[getTimestamp(start, 'yyyymmdd')] = dateArr.length
       if (start.getDay() == 1 || (dateArr.length == 0 && !sDate)) {
         sDate = new Date(start.getTime());
       }
@@ -27,11 +29,13 @@ $(function () {
       }
       start.setDate(start.getDate() + 1);
     }
+
+    daysHash[getTimestamp(end, 'yyyymmdd')] = dateArr.length
     var lastDate = new Date(dateArr[dateArr.length - 1][1])
     if (lastDate < end) {
       dateArr.push([new Date(lastDate.setDate(lastDate.getDate() + 1)), end]);
     }
-    return dateArr
+    return { "weeksDates": dateArr, "daysHash": daysHash }
   }
 
   function getLookupData(odsaStore, date) {
@@ -44,10 +48,10 @@ $(function () {
             function (err, data) {
               console.log(data)
               var starts_on = data["term"][0]["starts_on"]
-              var weeksDates = getWeeksDates(new Date(starts_on + "T23:59:59-0000"), new Date())
+              let { weeksDates, daysHash } = getWeeksDates(new Date(starts_on + "T23:59:59-0000"), new Date())
               var weeksDatesShort = weeksDates.map(function (x) {
-                var startDate = getTimestamp(x[0])
-                var endDate = getTimestamp(x[1])
+                var startDate = getTimestamp(x[0], 'yyyymmdd')
+                var endDate = getTimestamp(x[1], 'yyyymmdd')
                 return [startDate, endDate]
               })
               var weeksNamesShort = weeksDates.map(function (x) {
@@ -58,15 +62,24 @@ $(function () {
                 return startDateMonth + startDate[2] + '-' + endDateMonth + endDate[2]
               })
               var weeksEndDates = weeksDatesShort.map(function (x) { return x[1] })
+              var users = data["users"]
+              var usersHash = {}
+              for (var i = 0; i < users.length; i++) {
+                usersHash[users[i]["id"]] = i
+              }
+
               odsaStore.setItem(['odsaLookupData', currentDate].join('-'), {
                 "users": data["users"],
                 "chapters": data["chapters"],
                 "term": data["term"][0],
                 "weeksDates": weeksDatesShort,
                 "weeksNamesShort": weeksNamesShort,
-                "weeksEndDates": weeksEndDates
+                "weeksEndDates": weeksEndDates,
+                "daysHash": daysHash,
+                "usersHash": usersHash
               })
-              deleteLookupData(odsaStore, currentDate)
+              deleteStoreData(odsaStore, "odsaLookupData", currentDate)
+              getTimeTrackingData(odsaStore, currentDate)
             })
         }
       })
@@ -75,16 +88,16 @@ $(function () {
         console.log(err);
       });
   }
-  getLookupData(odsaStore)
 
-  function deleteLookupData(odsaStore, date) {
+  function deleteStoreData(odsaStore, dataPrefix, date) {
     var currentDate = date || getTimestamp(new Date, 'yyyymmdd')
+    var dataPrefix = dataPrefix || ''
     var _keys = []
     var promise = new Promise((resolve, reject) => {
       odsaStore.keys()
         .then(function (keys) {
           keys.forEach(function (key, i) {
-            if (key.startsWith("odsaLookupData")) {
+            if (key.startsWith(dataPrefix)) {
               var keyDate = key.split('-')[2];
               if (parseInt(keyDate) != parseInt(currentDate)) {
                 _keys.push(key);
@@ -94,17 +107,144 @@ $(function () {
           var promises = _keys.map(function (item) { return odsaStore.removeItem(item); });
           Promise.all(promises)
             .then((sessions) => {
-              console.log("lookup data was deleted: " + JSON.stringify(_keys))
+              console.log("Store data " + dataPrefix + " was deleted: " + JSON.stringify(_keys))
               resolve(sessions)
             });
         })
         .catch(function (err) {
-          console.log("Error deleting lookupData: " + err);
+          console.log("Error deleting store data " + dataPrefix + ": " + err);
           reject(err)
         });
     });
     return promise;
   }
+
+  function getTimeTrackingData(odsaStore, date) {
+    var currentDate = date || getTimestamp(new Date, 'yyyymmdd')
+
+    odsaStore.getItem(['odsaTimeTrackingData', currentDate].join('-'))
+      .then(function (odsaTimeTrackingData) {
+        if (!odsaTimeTrackingData) {
+          Plotly.d3.json("/course_offerings/time_tracking_data/" + ODSA_DATA.course_offering_id,
+            function (err, data) {
+              console.log(data)
+              odsaStore.setItem(['odsaTimeTrackingData', currentDate].join('-'), data)
+              deleteStoreData(odsaStore, "odsaTimeTrackingData", currentDate)
+              formatTimeTrackingData(data, currentDate)
+            })
+        }
+      })
+      .catch(function (err) {
+        // This code runs if there were any errors
+        console.log(err);
+      });
+  }
+
+  function generateRandomData(date) {
+    var currentDate = date || getTimestamp(new Date, 'yyyymmdd')
+    var insertStmt = "INSERT INTO`odsa_user_time_trackings` VALUES"
+
+    odsaStore.getItem(['odsaLookupData', currentDate].join('-'))
+      .then(function (lookups) {
+        var daysHash = lookups['daysHash']
+        var usersHash = lookups['usersHash']
+        var weeksDates = lookups['weeksDates']
+        var users = lookups['users']
+        var chapters = lookups['users']
+        var randomTime = []
+        // prepare weeksData matrix
+        for (var i = 0; i < users.length; i++) {
+          randomTime = getrandom(weeksDates.length, (i + 1) * 7)
+          for (var j = 0; j < randomTime.length; i++) {
+            for (var k = 0; k < daysHash.length; i++) {
+              var openBrace = "("
+              var userId = users[i]
+              var instBookId = ODSA_DATA.inst_book_id
+              var instChapterModuleId = 1
+              var instChapterId = 7
+              var UUID = userId + instBookId + instChapterModuleId + instChapterId + randomTime[j]
+              var sessionDate = daysHash[k]
+              var totalTime = randomTime[j]
+              var closeBrace = ")"
+              var comma = ","
+              var nullStr = "NULL"
+              var statement =
+                openBrace +
+                nullStr + comma +
+                userId + comma +
+                instBookId + comma +
+                nullStr + comma +
+                nullStr + comma +
+                nullStr + comma +
+                instChapterModuleId + comma +
+                instChapterId + comma +
+                UUID + comma +
+                sessionDate + comma +
+                totalTime + comma +
+                nullStr + comma +
+                nullStr + comma +
+                nullStr +
+                closeBrace + comma
+
+              insertStmt += statement
+
+              // insertStmt += "(NULL, 53, 2, NULL, NULL, NULL, 21, 4, NULL, NULL, 'c4959f3e-ba71-4eeb-9c1f-6773613c6ed7', '20201208', 39.00, NULL, '2020-12-08 23:08:37', '2020-12-08 23:08:37'),"
+
+              // insertStmt += "(7, 53, 2, NULL, NULL, NULL, 21, 4, NULL, NULL, 'c4959f3e-ba71-4eeb-9c1f-6773613c6ed7', '20201208', 39.00, NULL, '2020-12-08 23:08:37', '2020-12-08 23:08:37'),"
+            }
+          }
+        }
+        console.log(insertStmt)
+      })
+      .catch(function (err) {
+        // This code runs if there were any errors
+        console.log(err);
+      });
+
+  }
+  function formatTimeTrackingData(data, date) {
+    var currentDate = date || getTimestamp(new Date, 'yyyymmdd')
+    var weeksData = []
+
+    odsaStore.getItem(['odsaLookupData', currentDate].join('-'))
+      .then(function (lookups) {
+        var daysHash = lookups['daysHash']
+        var usersHash = lookups['usersHash']
+        var weeksDates = lookups['weeksDates']
+        var users = lookups['users']
+
+        // prepare weeksData matrix
+        for (var i = 0; i < weeksDates.length; i++) {
+          var a = new Array(users.length); for (let i = 0; i < users.length; ++i) a[i] = 0;
+          weeksData.push(a)
+        }
+
+        // add data to weeks matrix
+        for (var i = 0; i < data.length; i++) {
+          weeksData[daysHash[data[i]['dt']]][usersHash[data[i]['usr_id']]] += parseInt(data[i]['tt'])
+        }
+        console.log(weeksData)
+      })
+      .catch(function (err) {
+        // This code runs if there were any errors
+        console.log(err);
+      });
+
+    return weeksData
+  }
+
+  getLookupData(odsaStore)
+
+  function getrandom(num, mul) {
+    var value = [];
+    for (i = 0; i <= num; i++) {
+      var rand = Math.random() * mul;
+      value.push(rand);
+    }
+    return value;
+  }
+
+  generateRandomData()
 
   Plotly.d3.json("https://raw.githubusercontent.com/hosamshahin/OpenDSA-TimeTrackingViz/master/fake_data.json",
     function (err, userData) {
