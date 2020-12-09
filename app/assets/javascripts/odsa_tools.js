@@ -3,7 +3,6 @@ $(function () {
   //
   // Time Tracking
   //
-
   var odsaStore = localforage.createInstance({
     name: 'OpenDSA_analytics',
     storeName: 'OpenDSA_analytics'
@@ -35,34 +34,77 @@ $(function () {
     return dateArr
   }
 
-  Plotly.d3.json("/course_offerings/time_tracking/" + ODSA_DATA.course_offering_id,
-    function (err, data) {
-      console.log(data)
-      odsaStore.setItem("users", data["users"])
-      odsaStore.setItem("chapters", data["chapters"])
-      odsaStore.setItem("term", data["term"][0])
-      var starts_on = data["term"][0]["starts_on"]
-      var ends_on = data["term"][0]["ends_on"]
-      var weeksDates = getWeeksDates(new Date(starts_on + "T23:59:59-0000"), new Date())
-      var weeksDatesShort = weeksDates.map(function (x) {
-        var startDate = getTimestamp(x[0])
-        var endDate = getTimestamp(x[1])
-        return [startDate, endDate]
-      })
-      odsaStore.setItem("weeksDates", weeksDatesShort)
+  function getLookupData(odsaStore, date) {
+    var currentDate = date || getTimestamp(new Date, 'yyyymmdd')
 
-      var weeksNamesShort = weeksDates.map(function (x) {
-        var startDate = getTimestamp(x[0]).split('-')
-        var endDate = getTimestamp(x[1]).split('-')
-        var startDateMonth = x[0].toLocaleString('default', { month: 'short' })
-        var endDateMonth = x[1].toLocaleString('default', { month: 'short' })
-        return startDateMonth + startDate[2] + '-' + endDateMonth + endDate[2]
+    odsaStore.getItem(['odsaLookupData', currentDate].join('-'))
+      .then(function (odsaLookupData) {
+        if (!odsaLookupData) {
+          Plotly.d3.json("/course_offerings/time_tracking_lookup/" + ODSA_DATA.course_offering_id,
+            function (err, data) {
+              console.log(data)
+              var starts_on = data["term"][0]["starts_on"]
+              var weeksDates = getWeeksDates(new Date(starts_on + "T23:59:59-0000"), new Date())
+              var weeksDatesShort = weeksDates.map(function (x) {
+                var startDate = getTimestamp(x[0])
+                var endDate = getTimestamp(x[1])
+                return [startDate, endDate]
+              })
+              var weeksNamesShort = weeksDates.map(function (x) {
+                var startDate = getTimestamp(x[0]).split('-')
+                var endDate = getTimestamp(x[1]).split('-')
+                var startDateMonth = x[0].toLocaleString('default', { month: 'short' })
+                var endDateMonth = x[1].toLocaleString('default', { month: 'short' })
+                return startDateMonth + startDate[2] + '-' + endDateMonth + endDate[2]
+              })
+              var weeksEndDates = weeksDatesShort.map(function (x) { return x[1] })
+              odsaStore.setItem(['odsaLookupData', currentDate].join('-'), {
+                "users": data["users"],
+                "chapters": data["chapters"],
+                "term": data["term"][0],
+                "weeksDates": weeksDatesShort,
+                "weeksNamesShort": weeksNamesShort,
+                "weeksEndDates": weeksEndDates
+              })
+              deleteLookupData(odsaStore, currentDate)
+            })
+        }
       })
-      odsaStore.setItem("weeksNamesShort", weeksNamesShort)
+      .catch(function (err) {
+        // This code runs if there were any errors
+        console.log(err);
+      });
+  }
+  getLookupData(odsaStore)
 
-      var weeksEndDates = weeksDatesShort.map(function (x) { return x[1] })
-      odsaStore.setItem("weeksEndDates", weeksEndDates)
-    })
+  function deleteLookupData(odsaStore, date) {
+    var currentDate = date || getTimestamp(new Date, 'yyyymmdd')
+    var _keys = []
+    var promise = new Promise((resolve, reject) => {
+      odsaStore.keys()
+        .then(function (keys) {
+          keys.forEach(function (key, i) {
+            if (key.startsWith("odsaLookupData")) {
+              var keyDate = key.split('-')[2];
+              if (parseInt(keyDate) != parseInt(currentDate)) {
+                _keys.push(key);
+              }
+            }
+          })
+          var promises = _keys.map(function (item) { return odsaStore.removeItem(item); });
+          Promise.all(promises)
+            .then((sessions) => {
+              console.log("lookup data was deleted: " + JSON.stringify(_keys))
+              resolve(sessions)
+            });
+        })
+        .catch(function (err) {
+          console.log("Error deleting lookupData: " + err);
+          reject(err)
+        });
+    });
+    return promise;
+  }
 
   Plotly.d3.json("https://raw.githubusercontent.com/hosamshahin/OpenDSA-TimeTrackingViz/master/fake_data.json",
     function (err, userData) {
@@ -1105,7 +1147,8 @@ $(function () {
       downloadAnchorNode.remove();
     });
   });
-  function getTimestamp(date) {
+  function getTimestamp(date, format) {
+    var format = format || "yyyy-mm-dd"
     var month = date.getMonth() + 1;
     if (month < 10) month = '0' + month;
     var day = date.getDate();
@@ -1117,9 +1160,11 @@ $(function () {
     var second = date.getSeconds();
     if (second < 10) second = '0' + second;
 
-    // var timestamp = '' + date.getFullYear() + month + day + hour + minute + second;
-    var timestamp = date.getFullYear() + '-' + month + '-' + day;
-    return timestamp;
+    if (format == 'yyyymmdd') {
+      return [date.getFullYear(), month, day].join('');
+    } else {
+      return [date.getFullYear(), month, day].join('-');
+    }
   }
   function table2csv(headers, body, replacements) {
     if (!replacements) replacements = [];

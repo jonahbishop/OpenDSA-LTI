@@ -179,8 +179,8 @@ class CourseOfferingsController < ApplicationController
     }
   end
 
-  # GET /course_offerings/time_tracking/:id
-  def get_time_tracking_data
+  # GET /course_offerings/time_tracking_lookup/:id
+  def get_time_tracking_lookup
     if current_user.blank?
       render :json => {
         message: 'You are not logged in. Please make sure your browser is set to allow third-party cookies',
@@ -202,14 +202,35 @@ class CourseOfferingsController < ApplicationController
     chapters = InstChapter.where(inst_book_id: instBook.id).order('position')
     term = Term.where(id: course_offering.term_id)
 
-    userTimeTrackings = OdsaUserTimeTracking.where(inst_book_id: instBook.id).select('user_id as usr_id,inst_chapter_module_id as mod_id, inst_chapter_id as ch_id, total_time as tt, session_date as dt, sections_time as st')
-
     render :json => {
       users: users.as_json(only: [:id, :first_name, :last_name, :email]),
       chapters: chapters.as_json(only: [:id, :name]),
-      term: term.as_json(only: [:starts_on, :ends_on, :year, :slug]),
-      userTimeTrackings: userTimeTrackings.as_json()
+      term: term.as_json(only: [:starts_on, :ends_on, :year, :slug])
     }
+  end
+
+  # GET /course_offerings/time_tracking_data/:id
+  def get_time_tracking_data
+    if current_user.blank?
+      render :json => {
+        message: 'You are not logged in. Please make sure your browser is set to allow third-party cookies',
+      }, :status => :forbidden
+      return
+    end
+
+    course_offering = CourseOffering.find(params[:id])
+    unless course_offering.is_instructor?(current_user) || current_user.global_role.is_admin?
+      render :json => {
+        message: 'You are not an instructor for this course offering. Your user id: ' + current_user.id.to_s,
+      }, :status => :forbidden
+      return
+    end
+
+    instBook = course_offering.odsa_books.first
+
+    userTimeTrackings = OdsaUserTimeTracking.where(inst_book_id: instBook.id).select('user_id as usr_id,inst_chapter_module_id as mod_id, inst_chapter_id as ch_id, total_time as tt, session_date as dt, sections_time as st')
+
+    render :json => userTimeTrackings.as_json()
   end
 
   # -------------------------------------------------------------
