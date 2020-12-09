@@ -517,6 +517,7 @@ ActiveRecord::Schema.define(version: 2020_10_23_231228) do
     t.bigint "inst_book_section_exercise_id"
     t.bigint "inst_course_offering_exercise_id"
     t.bigint "inst_chapter_module_id"
+    t.bigint "inst_chapter_id"
     t.bigint "inst_module_version_id"
     t.bigint "inst_module_section_exercise_id"
     t.string "uuid", limit: 50, null: false
@@ -527,6 +528,7 @@ ActiveRecord::Schema.define(version: 2020_10_23_231228) do
     t.datetime "updated_at"
     t.index ["inst_book_id"], name: "odsa_user_time_tracking_inst_book_id_fk"
     t.index ["inst_book_section_exercise_id"], name: "odsa_user_time_tracking_inst_book_section_exercise_id_fk"
+    t.index ["inst_chapter_id"], name: "odsa_user_time_tracking_inst_chapter_id_fk"
     t.index ["inst_chapter_module_id"], name: "odsa_user_time_tracking_inst_chapter_module_id_fk"
     t.index ["inst_course_offering_exercise_id"], name: "odsa_user_time_tracking_inst_course_offering_exercise_id_fk"
     t.index ["inst_module_section_exercise_id"], name: "odsa_user_time_tracking_inst_module_section_exercise_id_fk"
@@ -667,6 +669,7 @@ ActiveRecord::Schema.define(version: 2020_10_23_231228) do
   add_foreign_key "odsa_user_time_trackings", "inst_book_section_exercises", name: "odsa_user_time_tracking_inst_book_section_exercise_id_fk"
   add_foreign_key "odsa_user_time_trackings", "inst_books", name: "odsa_user_time_tracking_inst_book_id_fk"
   add_foreign_key "odsa_user_time_trackings", "inst_chapter_modules", name: "odsa_user_time_tracking_inst_chapter_module_id_fk"
+  add_foreign_key "odsa_user_time_trackings", "inst_chapters", name: "odsa_user_time_tracking_inst_chapter_id_fk"
   add_foreign_key "odsa_user_time_trackings", "inst_course_offering_exercises", name: "odsa_user_time_tracking_inst_course_offering_exercise_id_fk"
   add_foreign_key "odsa_user_time_trackings", "inst_module_section_exercises", name: "odsa_user_time_tracking_inst_module_section_exercise_id_fk"
   add_foreign_key "odsa_user_time_trackings", "inst_module_versions", name: "odsa_user_time_tracking_inst_module_version_id_fk"

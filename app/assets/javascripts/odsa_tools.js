@@ -42,7 +42,7 @@ $(function () {
       odsaStore.setItem("chapters", data["chapters"])
       odsaStore.setItem("term", data["term"][0])
       var starts_on = data["term"][0]["starts_on"]
-      // var ends_on = data["term"][0]["ends_on"]
+      var ends_on = data["term"][0]["ends_on"]
       var weeksDates = getWeeksDates(new Date(starts_on + "T23:59:59-0000"), new Date())
       var weeksDatesShort = weeksDates.map(function (x) {
         var startDate = getTimestamp(x[0])
@@ -63,8 +63,6 @@ $(function () {
       var weeksEndDates = weeksDatesShort.map(function (x) { return x[1] })
       odsaStore.setItem("weeksEndDates", weeksEndDates)
     })
-
-
 
   Plotly.d3.json("https://raw.githubusercontent.com/hosamshahin/OpenDSA-TimeTrackingViz/master/fake_data.json",
     function (err, userData) {

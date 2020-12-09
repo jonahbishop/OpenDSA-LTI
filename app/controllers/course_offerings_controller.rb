@@ -202,10 +202,13 @@ class CourseOfferingsController < ApplicationController
     chapters = InstChapter.where(inst_book_id: instBook.id).order('position')
     term = Term.where(id: course_offering.term_id)
 
+    userTimeTrackings = OdsaUserTimeTracking.where(inst_book_id: instBook.id).select('user_id as usr_id,inst_chapter_module_id as mod_id, inst_chapter_id as ch_id, total_time as tt, session_date as dt, sections_time as st')
+
     render :json => {
       users: users.as_json(only: [:id, :first_name, :last_name, :email]),
       chapters: chapters.as_json(only: [:id, :name]),
-      term: term.as_json(only: [:starts_on, :ends_on, :year, :slug])
+      term: term.as_json(only: [:starts_on, :ends_on, :year, :slug]),
+      userTimeTrackings: userTimeTrackings.as_json()
     }
   end
 
