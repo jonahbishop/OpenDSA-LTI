@@ -526,7 +526,7 @@ ActiveRecord::Schema.define(version: 2020_10_23_231228) do
     t.text "sections_time", null: false
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.index ["inst_book_id"], name: "odsa_user_time_tracking_inst_book_id_fk"
+    t.index ["inst_book_id", "session_date"], name: "index_odsa_user_time_trackings_on_inst_book_id_session_date"
     t.index ["inst_book_section_exercise_id"], name: "odsa_user_time_tracking_inst_book_section_exercise_id_fk"
     t.index ["inst_chapter_id"], name: "odsa_user_time_tracking_inst_chapter_id_fk"
     t.index ["inst_chapter_module_id"], name: "odsa_user_time_tracking_inst_chapter_module_id_fk"

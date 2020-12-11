@@ -41,77 +41,88 @@ $(function () {
   function getLookupData(odsaStore, date) {
     var currentDate = date || getTimestamp(new Date, 'yyyymmdd')
 
-    odsaStore.getItem(['odsaLookupData', currentDate].join('-'))
-      .then(function (odsaLookupData) {
-        if (!odsaLookupData) {
-          Plotly.d3.json("/course_offerings/time_tracking_lookup/" + ODSA_DATA.course_offering_id,
-            function (err, data) {
-              var starts_on = data["term"][0]["starts_on"]
-              let { weeksDates, daysHash } = getWeeksDates(new Date(starts_on + "T23:59:59-0000"), new Date())
-              var weeksDatesShort = weeksDates.map(function (x) {
-                var startDate = getTimestamp(x[0], 'yyyymmdd')
-                var endDate = getTimestamp(x[1], 'yyyymmdd')
-                return [startDate, endDate]
-              })
-              var weeksNames = weeksDates.map(function (x) {
-                var startDate = getTimestamp(x[0]).split('-')
-                var endDate = getTimestamp(x[1]).split('-')
-                var startDateMonth = x[0].toLocaleString('default', { month: 'short' })
-                var endDateMonth = x[1].toLocaleString('default', { month: 'short' })
-                return startDateMonth + startDate[2] + '-' + endDateMonth + endDate[2]
-              })
-              var weeksEndDates = weeksDatesShort.map(function (x) { return x[1] })
-              var users = data["users"]
-              var usersHash = {}
-              for (var i = 0; i < users.length; i++) {
-                usersHash[String(users[i]["id"])] = i
-              }
-
-              var chapters = data["chapters"]
-              var chaptersNames = []
-              var chaptersNamesIds = []
-              for (var i = 0; i < chapters.length; i++) {
-                var chapterName = chapters[i]['ch_name']
-                var chapterId = chapters[i]['ch_id']
-                if (!chaptersNames.includes(chapterName)) {
-                  chaptersNames.push(chapterName)
-                  chaptersNamesIds.push({ 'ch_name': chapterName, 'ch_id': chapterId })
+    var promise = new Promise((resolve, reject) => {
+      odsaStore.getItem(['odsaLookupData', currentDate].join('-'))
+        .then(function (odsaLookupData) {
+          if (!odsaLookupData) {
+            Plotly.d3.json("/course_offerings/time_tracking_lookup/" + ODSA_DATA.course_offering_id,
+              function (err, data) {
+                if (err) {
+                  reject(err)
                 }
-              }
 
+                var starts_on = data["term"][0]["starts_on"]
+                let { weeksDates, daysHash } = getWeeksDates(new Date(starts_on + "T23:59:59-0000"), new Date())
 
-              var chaptersHash = {}
-              var chaptersDates = []
-              for (var i = 0; i < chaptersNamesIds.length; i++) {
-                chaptersHash[String(chaptersNamesIds[i]["ch_id"])] = i
-                chaptersDates.push(weeksEndDates[i])
-              }
+                var weeksDatesShort = weeksDates.map(function (x) {
+                  var startDate = getTimestamp(x[0])
+                  var endDate = getTimestamp(x[1])
+                  return [startDate, endDate]
+                })
 
-              var lookups = {
-                "users": data["users"],
-                "chapters": data["chapters"],
-                "chaptersNames": chaptersNames,
-                "term": data["term"][0],
-                "weeksDates": weeksDatesShort,
-                "weeksNames": weeksNames,
-                "weeksEndDates": weeksEndDates,
-                "daysHash": daysHash,
-                "usersHash": usersHash,
-                "chaptersHash": chaptersHash,
-                "chaptersNamesIds": chaptersNamesIds,
-                "chaptersDates": chaptersDates
-              }
+                var weeksNames = weeksDates.map(function (x) {
+                  var startDate = getTimestamp(x[0]).split('-')
+                  var endDate = getTimestamp(x[1]).split('-')
+                  var startDateMonth = x[0].toLocaleString('default', { month: 'short' })
+                  var endDateMonth = x[1].toLocaleString('default', { month: 'short' })
+                  return startDateMonth + startDate[2] + '-' + endDateMonth + endDate[2]
+                })
 
-              odsaStore.setItem(['odsaLookupData', currentDate].join('-'), lookups)
-              deleteStoreData(odsaStore, "odsaLookupData", currentDate)
-              getTimeTrackingData(odsaStore, currentDate, lookups)
-            })
-        }
-      })
-      .catch(function (err) {
-        // This code runs if there were any errors
-        console.log(err);
-      });
+                var weeksEndDates = weeksDatesShort.map(function (x) { return x[1] })
+                var users = data["users"]
+                var usersHash = {}
+                for (var i = 0; i < users.length; i++) {
+                  usersHash[String(users[i]["id"])] = i
+                }
+
+                var chapters = data["chapters"]
+                var chaptersNames = []
+                var chaptersNamesIds = []
+                for (var i = 0; i < chapters.length; i++) {
+                  var chapterName = chapters[i]['ch_name']
+                  var chapterId = chapters[i]['ch_id']
+                  if (!chaptersNames.includes(chapterName)) {
+                    chaptersNames.push(chapterName)
+                    chaptersNamesIds.push({ 'ch_name': chapterName, 'ch_id': chapterId })
+                  }
+                }
+
+                var chaptersHash = {}
+                var chaptersDates = []
+                for (var i = 0; i < chaptersNamesIds.length; i++) {
+                  chaptersHash[String(chaptersNamesIds[i]["ch_id"])] = i
+                  chaptersDates.push(weeksEndDates[i])
+                }
+
+                odsaLookupData = {
+                  "chapters": data["chapters"],
+                  "chaptersDates": chaptersDates,
+                  "chaptersHash": chaptersHash,
+                  "chaptersNames": chaptersNames,
+                  "chaptersNamesIds": chaptersNamesIds,
+                  "daysHash": daysHash,
+                  "term": data["term"][0],
+                  "users": data["users"],
+                  "usersHash": usersHash,
+                  "weeksDates": weeksDatesShort,
+                  "weeksEndDates": weeksEndDates,
+                  "weeksNames": weeksNames
+                }
+
+                odsaStore.setItem(['odsaLookupData', currentDate].join('-'), odsaLookupData)
+                deleteStoreData(odsaStore, "odsaLookupData", currentDate)
+                resolve(odsaLookupData)
+              })
+          } else {
+            resolve(odsaLookupData)
+          }
+        })
+        .catch(function (err) {
+          // This code runs if there were any errors
+          reject(err)
+        });
+    });
+    return promise;
   }
 
   function deleteStoreData(odsaStore, dataPrefix, date) {
@@ -144,35 +155,31 @@ $(function () {
     return promise;
   }
 
-  function getTimeTrackingData(odsaStore, date, lookups) {
+  function getTimeTrackingData(odsaStore, lookups, date) {
     var currentDate = date || getTimestamp(new Date, 'yyyymmdd')
 
-    odsaStore.getItem(['odsaTimeTrackingData', currentDate].join('-'))
-      .then(function (odsaTimeTrackingData) {
-        if (!odsaTimeTrackingData) {
-          Plotly.d3.json("/course_offerings/time_tracking_data/" + ODSA_DATA.course_offering_id,
-            function (err, data) {
-              odsaStore.setItem(['odsaTimeTrackingData', currentDate].join('-'), data)
-              deleteStoreData(odsaStore, "odsaTimeTrackingData", currentDate)
-              var { weeksData, chaptersData } = formatTimeTrackingData(data, lookups)
-
-              initPlotly({
-                'weeksData': weeksData,
-                'chaptersData': chaptersData,
-                'weeksNames': lookups['weeksEndNames'],
-                'weeksDates': lookups['weeksDates'],
-                'chaptersNames': lookups['chaptersNames'],
-                'chaptersDates': lookups['chaptersDates'],
-                'studentsInfo': lookups['users']
+    var promise = new Promise((resolve, reject) => {
+      odsaStore.getItem(['odsaTimeTrackingData', currentDate].join('-'))
+        .then(function (odsaTimeTrackingData) {
+          if (!odsaTimeTrackingData) {
+            Plotly.d3.json("/course_offerings/time_tracking_data/" + ODSA_DATA.course_offering_id,
+              function (err, data) {
+                var odsaTimeTrackingData = formatTimeTrackingData(data, lookups)
+                odsaStore.setItem(['odsaTimeTrackingData', currentDate].join('-'), odsaTimeTrackingData)
+                deleteStoreData(odsaStore, "odsaTimeTrackingData", currentDate)
+                resolve(odsaTimeTrackingData)
               })
+          } else {
+            resolve(odsaTimeTrackingData)
+          }
+        })
+        .catch(function (err) {
+          reject(err)
+        });
+    });
+    return promise;
 
-            })
-        }
-      })
-      .catch(function (err) {
-        // This code runs if there were any errors
-        console.log(err);
-      });
+
   }
 
   function uuidv4() {
@@ -280,21 +287,42 @@ $(function () {
     // console.log(weeksData)
     // console.log(chaptersData)
 
-    return { 'weeksData': weeksData, 'chaptersData': chaptersData }
+    return {
+      'weeksData': weeksData,
+      'chaptersData': chaptersData,
+      'weeksNames': lookups['weeksNames'],
+      'weeksDates': lookups['weeksEndDates'],
+      'chaptersNames': lookups['chaptersNames'],
+      'chaptersDates': lookups['chaptersDates'],
+      'studentsInfo': lookups['users']
+    }
   }
 
   getLookupData(odsaStore)
+    .then((lookups) => {
+      getTimeTrackingData(odsaStore, lookups)
+        .then((userData) => {
+          initPlotly(userData)
+        })
+        .catch((err) => {
+          console.log(err)
+        })
+    })
+    .catch((err) => {
+      console.log(err)
+    })
 
-  // generateRandomData()
+  generateRandomData()
 
   function initPlotly(userData) {
+    var chaptersData = userData["chaptersData"]
+    var chaptersDates = userData["chaptersDates"]
+    var chaptersNames = userData["chaptersNames"]
     var studentsInfo = userData["studentsInfo"]
     var weeksData = userData["weeksData"]
-    var weeksNames = userData["weeksNames"]
     var weeksDates = userData["weeksDates"]
-    var chaptersData = userData["chaptersData"]
-    var chaptersNames = userData["chaptersNames"]
-    var chaptersDates = userData["chaptersDates"]
+    var weeksNames = userData["weeksNames"]
+
     var numOfWeeks = weeksData.length
     var numOfChapters = chaptersData.length
 
@@ -509,7 +537,6 @@ $(function () {
         autorange: true,
         showgrid: true,
         zeroline: true,
-        dtick: 5,
         gridcolor: 'rgb(255, 255, 255)',
         gridwidth: 1,
         zerolinecolor: 'rgb(255, 255, 255)',
@@ -1126,11 +1153,6 @@ $(function () {
     })
 
   }
-  // Plotly.d3.json("https://raw.githubusercontent.com/hosamshahin/OpenDSA-TimeTrackingViz/master/fake_data.json",
-  //   function (err, userData) {
-
-  //   })
-
 
   //
   // Exercises Lookup
@@ -1332,6 +1354,7 @@ $(function () {
       downloadAnchorNode.remove();
     });
   });
+
   function getTimestamp(date, format) {
     var format = format || "yyyy-mm-dd"
     var month = date.getMonth() + 1;

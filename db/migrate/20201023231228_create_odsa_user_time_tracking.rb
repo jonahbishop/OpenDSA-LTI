@@ -29,5 +29,6 @@ class CreateOdsaUserTimeTracking < ActiveRecord::Migration[6.0]
     add_foreign_key :odsa_user_time_trackings, :inst_module_section_exercises, name: "odsa_user_time_tracking_inst_module_section_exercise_id_fk"
 
     add_index :odsa_user_time_trackings, [:user_id, :uuid], unique: true, name: 'index_odsa_user_time_trackings_on_user_id_uuid'
+    add_index :odsa_user_time_trackings, [:inst_book_id, :session_date], name: 'index_odsa_user_time_trackings_on_inst_book_id_session_date'
   end
 end
